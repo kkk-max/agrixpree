@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.production.example
+*.log
+logs/
+uploads/
+dist/
+.DS_Store
+ruvector.db
+.claude-flow/
+.claude/
+.swarm/
+.mcp.json
