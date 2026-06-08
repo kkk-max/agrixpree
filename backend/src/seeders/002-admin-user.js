@@ -23,7 +23,7 @@ module.exports = {
     // Create wallet for admin
     await queryInterface.sequelize.query(`
       INSERT INTO wallets (user_id, balance, currency, is_active, created_at, updated_at)
-      SELECT id, 0, 'INR', 1, NOW(), NOW() FROM users WHERE mobile = '9000000000' LIMIT 1
+      SELECT id, 0, 'INR', true, NOW(), NOW() FROM users WHERE mobile = '9000000000' LIMIT 1
     `);
   },
   async down(queryInterface) {

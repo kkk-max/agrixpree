@@ -21,7 +21,7 @@ module.exports = {
     await queryInterface.createTable('verification_steps', {
       id: { type: Sequelize.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
       user_id: { type: Sequelize.INTEGER.UNSIGNED, allowNull: false, references: { model: 'users', key: 'id' }, onDelete: 'CASCADE' },
-      step_number: { type: Sequelize.TINYINT, allowNull: false },
+      step_number: { type: Sequelize.SMALLINT, allowNull: false },
       step_name: { type: Sequelize.STRING(100), allowNull: false },
       status: { type: Sequelize.ENUM('pending', 'submitted', 'approved', 'rejected'), defaultValue: 'pending' },
       reviewed_by: { type: Sequelize.INTEGER.UNSIGNED, references: { model: 'users', key: 'id' }, onDelete: 'SET NULL' },

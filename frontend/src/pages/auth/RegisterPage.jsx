@@ -9,19 +9,19 @@ const { Title, Text } = Typography;
 
 const RegisterPage = () => {
   const [step, setStep] = useState(0);
-  const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [otpForm] = Form.useForm();
 
   const registerMutation = useMutation({
     mutationFn: (data) => register(data).then(r => r.data),
-    onSuccess: (_, variables) => { setMobile(variables.mobile); setStep(1); message.success('OTP sent to your mobile'); },
+    onSuccess: (_, variables) => { setEmail(variables.email); setStep(1); message.success('OTP sent to your email'); },
     onError: (err) => message.error(err.response?.data?.error?.message || 'Registration failed')
   });
 
   const otpMutation = useMutation({
-    mutationFn: (data) => verifyOtp({ ...data, mobile, purpose: 'registration' }).then(r => r.data),
+    mutationFn: (data) => verifyOtp({ ...data, email, purpose: 'registration' }).then(r => r.data),
     onSuccess: () => { message.success('Account created! Please sign in.'); navigate('/login'); },
     onError: (err) => message.error(err.response?.data?.error?.message || 'Invalid OTP')
   });
@@ -43,7 +43,7 @@ const RegisterPage = () => {
               {step === 0 ? 'Create your account' : 'Verify your number'}
             </Title>
             <Text style={{ color: '#6b7280', fontSize: 13 }}>
-              {step === 0 ? 'Join thousands of farmers and buyers on AgriXpree' : `We sent a 6-digit OTP to ${mobile}`}
+              {step === 0 ? 'Join thousands of farmers and buyers on AgriXpree' : `We sent a 6-digit OTP to ${email}`}
             </Text>
           </div>
 
@@ -61,7 +61,7 @@ const RegisterPage = () => {
               <Form.Item name="mobile" label={<span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Mobile Number</span>} rules={[{ required: true }, { pattern: /^[6-9]\d{9}$/, message: 'Enter valid 10-digit mobile' }]}>
                 <Input prefix={<MobileOutlined style={{ color: '#9ca3af' }} />} placeholder="9876543210" size="large" maxLength={10} style={{ height: 44 }} />
               </Form.Item>
-              <Form.Item name="email" label={<span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Email <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional)</span></span>}>
+              <Form.Item name="email" label={<span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Email</span>} rules={[{ required: true, type: 'email', message: 'Enter a valid email address' }]}>
                 <Input type="email" placeholder="rajesh@example.com" size="large" style={{ height: 44 }} />
               </Form.Item>
               <Form.Item name="role" label={<span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>I am a</span>} rules={[{ required: true, message: 'Select your role' }]}>
@@ -82,7 +82,7 @@ const RegisterPage = () => {
           {step === 1 && (
             <Form form={otpForm} layout="vertical" onFinish={otpMutation.mutate} requiredMark={false}>
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: '#15803d' }}>
-                📱 OTP sent to <strong>{mobile}</strong>. Check the backend terminal console for the code.
+                📧 OTP sent to <strong>{email}</strong>. Please check your inbox.
               </div>
               <Form.Item name="code" label={<span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>6-digit OTP</span>} rules={[{ required: true, len: 6, message: 'Enter the 6-digit OTP' }]}>
                 <Input placeholder="• • • • • •" size="large" maxLength={6} style={{ height: 48, fontSize: 20, letterSpacing: '0.3em', textAlign: 'center' }} />

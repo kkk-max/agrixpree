@@ -7,6 +7,7 @@ const { generateOTP, isExpired } = require('../../utils/otp');
 const { AppError } = require('../../middleware/errorHandler');
 const { BCRYPT_ROUNDS, OTP_TTL_MINUTES } = require('../../config/constants');
 const logger = require('../../utils/logger');
+const { sendOtpEmail } = require('../../utils/emailService');
 
 const generateTokens = (user) => {
   const payload = { id: user.id, uuid: user.uuid, role: user.role, mobile: user.mobile };
@@ -16,11 +17,16 @@ const generateTokens = (user) => {
 };
 
 const register = async ({ name, mobile, email, password, role }) => {
-  const existing = await User.findOne({ where: { mobile } });
-  if (existing) throw new AppError('Mobile number already registered', 409, 'CONFLICT');
+  if (!email) throw new AppError('Email is required', 400, 'VALIDATION_ERROR');
+  const existingEmail = await User.findOne({ where: { email } });
+  if (existingEmail) throw new AppError('Email already registered', 409, 'CONFLICT');
+  if (mobile) {
+    const existingMobile = await User.findOne({ where: { mobile } });
+    if (existingMobile) throw new AppError('Mobile number already registered', 409, 'CONFLICT');
+  }
 
   const password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-  const user = await User.create({ uuid: uuidv4(), name, mobile, email: email || null, password_hash, role });
+  const user = await User.create({ uuid: uuidv4(), name, mobile: mobile || null, email, password_hash, role });
 
   await Wallet.create({ user_id: user.id });
 
@@ -40,23 +46,22 @@ const register = async ({ name, mobile, email, password, role }) => {
 
   const otp = generateOTP();
   const expires_at = dayjs().add(OTP_TTL_MINUTES, 'minute').toDate();
-  await OtpCode.create({ mobile, code: otp, purpose: 'registration', expires_at });
+  await OtpCode.create({ email, mobile: mobile || null, code: otp, purpose: 'registration', expires_at });
 
-  logger.info(`OTP for ${mobile}: ${otp}`);
-  console.log(`\n📱 OTP for ${mobile}: ${otp}\n`);
+  await sendOtpEmail({ to: email, otp, purpose: 'registration' });
 
-  return { message: 'OTP sent to your mobile number', userId: user.uuid };
+  return { message: 'OTP sent to your email', userId: user.uuid };
 };
 
-const verifyOtp = async ({ mobile, code, purpose }) => {
-  const otpRecord = await OtpCode.findOne({ where: { mobile, code, purpose, is_used: false }, order: [['created_at', 'DESC']] });
+const verifyOtp = async ({ email, code, purpose }) => {
+  const otpRecord = await OtpCode.findOne({ where: { email, code, purpose, is_used: false }, order: [['created_at', 'DESC']] });
   if (!otpRecord) throw new AppError('Invalid OTP', 400, 'INVALID_OTP');
   if (isExpired(otpRecord.expires_at)) throw new AppError('OTP has expired', 400, 'OTP_EXPIRED');
 
   await otpRecord.update({ is_used: true });
 
   if (purpose === 'registration') {
-    const user = await User.findOne({ where: { mobile } });
+    const user = await User.findOne({ where: { email } });
     if (user) await user.update({ is_verified: true });
   }
 
@@ -102,25 +107,25 @@ const logout = async (token) => {
   await RefreshToken.update({ is_revoked: true }, { where: { token } });
 };
 
-const forgotPassword = async ({ mobile }) => {
-  const user = await User.findOne({ where: { mobile } });
-  if (!user) throw new AppError('No account with this mobile', 404, 'NOT_FOUND');
+const forgotPassword = async ({ email }) => {
+  const user = await User.findOne({ where: { email } });
+  if (!user) throw new AppError('No account with this email', 404, 'NOT_FOUND');
 
   const otp = generateOTP();
   const expires_at = dayjs().add(OTP_TTL_MINUTES, 'minute').toDate();
-  await OtpCode.create({ mobile, code: otp, purpose: 'password_reset', expires_at });
+  await OtpCode.create({ email, code: otp, purpose: 'password_reset', expires_at });
 
-  console.log(`\n📱 Password reset OTP for ${mobile}: ${otp}\n`);
-  return { message: 'OTP sent' };
+  await sendOtpEmail({ to: email, otp, purpose: 'password_reset' });
+  return { message: 'OTP sent to your email' };
 };
 
-const resetPassword = async ({ mobile, code, password }) => {
-  const otpRecord = await OtpCode.findOne({ where: { mobile, code, purpose: 'password_reset', is_used: false }, order: [['created_at', 'DESC']] });
+const resetPassword = async ({ email, code, password }) => {
+  const otpRecord = await OtpCode.findOne({ where: { email, code, purpose: 'password_reset', is_used: false }, order: [['created_at', 'DESC']] });
   if (!otpRecord || isExpired(otpRecord.expires_at)) throw new AppError('Invalid or expired OTP', 400, 'INVALID_OTP');
 
   await otpRecord.update({ is_used: true });
   const password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-  await User.update({ password_hash }, { where: { mobile } });
+  await User.update({ password_hash }, { where: { email } });
 
   return { message: 'Password reset successful' };
 };

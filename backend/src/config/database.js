@@ -2,21 +2,21 @@ require('dotenv').config();
 
 module.exports = {
   development: {
-    username: process.env.DB_USER || 'root',
+    username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     database: process.env.DB_NAME || 'agrixpree_dev',
     host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    dialect: 'mysql',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    dialect: 'postgres',
     logging: false,
     pool: { min: 0, max: 10, idle: 10000 }
   },
   test: {
-    username: process.env.DB_USER || 'root',
+    username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     database: process.env.DB_NAME_TEST || 'agrixpree_test',
     host: process.env.DB_HOST || 'localhost',
-    dialect: 'mysql',
+    dialect: 'postgres',
     logging: false
   },
   production: {
@@ -24,7 +24,8 @@ module.exports = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
-    dialect: 'mysql',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    dialect: 'postgres',
     logging: false,
     pool: { min: 2, max: 10, idle: 10000 }
   }
