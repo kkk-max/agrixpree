@@ -129,12 +129,6 @@ const LoginPage = () => {
             <Link to="/register" style={{ color: '#16a34a', fontWeight: 600, fontSize: 13 }}>Create account</Link>
           </div>
 
-          <Divider style={{ margin: '24px 0', color: '#9ca3af', fontSize: 12 }}>Demo credentials</Divider>
-          <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '12px 16px', border: '1px solid #bbf7d0' }}>
-            <div style={{ fontSize: 12, color: '#15803d', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <span><strong>Admin:</strong> 9000000000 / Admin@123</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
