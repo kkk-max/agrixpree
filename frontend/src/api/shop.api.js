@@ -65,6 +65,15 @@ export const adminGetCategories = () =>
 export const adminSetCategoryActive = (id, isActive) =>
   client.patch(`/admin/shop/categories/${id}/active`, { is_active: isActive }).then(r => r.data);
 
+export const adminCreateCategory = (body) =>
+  client.post('/admin/shop/categories', body).then(r => r.data);
+
+export const adminUpdateCategory = (id, body) =>
+  client.put(`/admin/shop/categories/${id}`, body).then(r => r.data);
+
+export const adminDeleteCategory = (id) =>
+  client.delete(`/admin/shop/categories/${id}`).then(r => r.data);
+
 export const adminGetShopOrders = (params) =>
   client.get('/admin/shop/orders', { params }).then(r => r.data);
 
