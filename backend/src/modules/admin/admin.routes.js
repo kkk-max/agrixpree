@@ -116,14 +116,29 @@ router.delete('/shop/products/:id', async (req, res, next) => {
   catch (err) { next(err); }
 });
 
-// Categories (launch gating via is_active)
+// Categories CRUD
 router.get('/shop/categories', async (req, res, next) => {
   try { sendSuccess(res, await service.getAdminCategories(), 'Categories fetched'); }
   catch (err) { next(err); }
 });
 
+router.post('/shop/categories', async (req, res, next) => {
+  try { sendSuccess(res, await service.createCategory(req.body), 'Category created', 201); }
+  catch (err) { next(err); }
+});
+
+router.put('/shop/categories/:id', async (req, res, next) => {
+  try { sendSuccess(res, await service.updateCategory(req.params.id, req.body), 'Category updated'); }
+  catch (err) { next(err); }
+});
+
 router.patch('/shop/categories/:id/active', async (req, res, next) => {
   try { sendSuccess(res, await service.setCategoryActive(req.params.id, req.body.is_active), 'Category updated'); }
+  catch (err) { next(err); }
+});
+
+router.delete('/shop/categories/:id', async (req, res, next) => {
+  try { sendSuccess(res, await service.deleteCategory(req.params.id), 'Category deleted'); }
   catch (err) { next(err); }
 });
 

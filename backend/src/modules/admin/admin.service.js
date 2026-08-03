@@ -536,4 +536,45 @@ const setCategoryActive = async (categoryId, isActive) => {
   return category;
 };
 
-module.exports = { getDashboardStats, getUsers, updateUserStatus, reviewDocument, reviewVerificationStep, getAdminProducts, approveProduct, rejectProduct, getProcurements, createProcurement, updateProcurementStatus, createResaleListing, getResaleListings, createShopProduct, updateShopProduct, deleteShopProduct, getAdminShopProducts, getShopOrders, updateShopOrderStatus, getAdminCategories, setCategoryActive };
+const toSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+const createCategory = async (body) => {
+  const slug = body.slug || toSlug(body.name);
+  const existing = await Category.findOne({ where: { slug } });
+  if (existing) throw new AppError('Category with this slug already exists', 409, 'CONFLICT');
+  return Category.create({
+    name: body.name,
+    slug,
+    description: body.description || null,
+    image_url: body.image_url || null,
+    parent_id: body.parent_id || null,
+    sort_order: body.sort_order ?? 0,
+    is_active: body.is_active !== undefined ? toBool(body.is_active) : true,
+  });
+};
+
+const updateCategory = async (categoryId, body) => {
+  const category = await Category.findByPk(categoryId);
+  if (!category) throw new AppError('Category not found', 404, 'NOT_FOUND');
+  const updates = {};
+  if (body.name !== undefined) { updates.name = body.name; updates.slug = body.slug || toSlug(body.name); }
+  if (body.slug !== undefined) updates.slug = body.slug;
+  if (body.description !== undefined) updates.description = body.description;
+  if (body.image_url !== undefined) updates.image_url = body.image_url;
+  if (body.parent_id !== undefined) updates.parent_id = body.parent_id;
+  if (body.sort_order !== undefined) updates.sort_order = body.sort_order;
+  if (body.is_active !== undefined) updates.is_active = toBool(body.is_active);
+  await category.update(updates);
+  return category;
+};
+
+const deleteCategory = async (categoryId) => {
+  const category = await Category.findByPk(categoryId);
+  if (!category) throw new AppError('Category not found', 404, 'NOT_FOUND');
+  const productCount = await Product.count({ where: { category_id: categoryId } });
+  if (productCount > 0) throw new AppError(`Cannot delete: ${productCount} product(s) are linked to this category`, 409, 'CONFLICT');
+  await category.destroy();
+  return { deleted: true, id: categoryId };
+};
+
+module.exports = { getDashboardStats, getUsers, updateUserStatus, reviewDocument, reviewVerificationStep, getAdminProducts, approveProduct, rejectProduct, getProcurements, createProcurement, updateProcurementStatus, createResaleListing, getResaleListings, createShopProduct, updateShopProduct, deleteShopProduct, getAdminShopProducts, getShopOrders, updateShopOrderStatus, getAdminCategories, setCategoryActive, createCategory, updateCategory, deleteCategory };
