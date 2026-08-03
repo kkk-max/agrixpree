@@ -13,10 +13,14 @@ const categories = [
   { name: 'Others', slug: 'others', sort_order: 10 }
 ];
 
+// Only Fruits & Vegetables are live at launch; the rest ship inactive and can
+// be switched on later from the admin Categories screen.
+const LAUNCH_SLUGS = ['fruits', 'vegetables'];
+
 module.exports = {
   async up(queryInterface) {
     const now = new Date();
-    await queryInterface.bulkInsert('categories', categories.map(c => ({ ...c, is_active: true, created_at: now, updated_at: now })));
+    await queryInterface.bulkInsert('categories', categories.map(c => ({ ...c, is_active: LAUNCH_SLUGS.includes(c.slug), created_at: now, updated_at: now })));
   },
   async down(queryInterface) {
     await queryInterface.bulkDelete('categories', null, {});

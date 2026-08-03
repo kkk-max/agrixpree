@@ -8,6 +8,14 @@ const register = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const registerCustomer = async (req, res, next) => {
+  try {
+    const result = await authService.registerCustomer(req.body);
+    res.cookie('refreshToken', result.refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    sendSuccess(res, { accessToken: result.accessToken, user: result.user }, 'Account created', 201);
+  } catch (err) { next(err); }
+};
+
 const verifyOtp = async (req, res, next) => {
   try {
     const result = await authService.verifyOtp(req.body);
@@ -56,4 +64,4 @@ const resetPassword = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { register, verifyOtp, login, refreshToken, logout, forgotPassword, resetPassword };
+module.exports = { register, registerCustomer, verifyOtp, login, refreshToken, logout, forgotPassword, resetPassword };

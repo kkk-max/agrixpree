@@ -24,6 +24,8 @@ const Notification = require('./Notification')(sequelize);
 const AuditLog = require('./AuditLog')(sequelize);
 const Procurement = require('./Procurement')(sequelize);
 const ResaleListing = require('./ResaleListing')(sequelize);
+const ShopOrder = require('./ShopOrder')(sequelize);
+const ShopOrderItem = require('./ShopOrderItem')(sequelize);
 
 // Associations
 User.hasOne(FarmerProfile, { foreignKey: 'user_id', as: 'farmerProfile' });
@@ -71,4 +73,10 @@ Product.hasMany(Procurement, { foreignKey: 'product_id', as: 'procurements' });
 ResaleListing.belongsTo(Procurement, { foreignKey: 'procurement_id', as: 'procurement' });
 ResaleListing.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 
-module.exports = { sequelize, Sequelize, User, FarmerProfile, BuyerProfile, OtpCode, RefreshToken, Wallet, WalletTransaction, Category, Product, ProductImage, Document, VerificationStep, Order, OrderItem, Notification, AuditLog, Procurement, ResaleListing };
+ShopOrder.hasMany(ShopOrderItem, { foreignKey: 'order_id', as: 'items' });
+ShopOrderItem.belongsTo(ShopOrder, { foreignKey: 'order_id' });
+ShopOrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+ShopOrder.belongsTo(User, { foreignKey: 'user_id', as: 'customer' });
+User.hasMany(ShopOrder, { foreignKey: 'user_id', as: 'shopOrders' });
+
+module.exports = { sequelize, Sequelize, User, FarmerProfile, BuyerProfile, OtpCode, RefreshToken, Wallet, WalletTransaction, Category, Product, ProductImage, Document, VerificationStep, Order, OrderItem, Notification, AuditLog, Procurement, ResaleListing, ShopOrder, ShopOrderItem };

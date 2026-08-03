@@ -37,6 +37,7 @@ v1.use('/inventory/products', require('./modules/inventory/inventory.routes'));
 v1.use('/products', require('./modules/products/products.routes'));
 v1.use('/notifications', require('./modules/notification/notification.routes'));
 v1.use('/admin', require('./modules/admin/admin.routes'));
+v1.use('/shop', require('./modules/shop/shop.routes'));
 
 app.use('/api/v1', v1);
 

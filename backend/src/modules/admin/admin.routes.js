@@ -4,6 +4,7 @@ const { sendSuccess } = require('../../utils/response');
 const { authenticate } = require('../../middleware/auth');
 const { authorize } = require('../../middleware/rbac');
 const { Document, VerificationStep, User } = require('../../models');
+const { upload } = require('../../middleware/upload');
 
 router.use(authenticate, authorize('admin'));
 
@@ -89,6 +90,53 @@ router.get('/resale-listings', async (req, res, next) => {
 
 router.post('/procurements/:id/relist', async (req, res, next) => {
   try { sendSuccess(res, await service.createResaleListing(req.params.id, req.body, req.user.id), 'Resale listing created', 201); }
+  catch (err) { next(err); }
+});
+
+// Shop Product CRUD
+router.get('/shop/products', async (req, res, next) => {
+  try {
+    const { products, pagination } = await service.getAdminShopProducts(req.query);
+    sendSuccess(res, products, 'Shop products fetched', 200, pagination);
+  } catch (err) { next(err); }
+});
+
+router.post('/shop/products', upload.array('images', 10), async (req, res, next) => {
+  try { sendSuccess(res, await service.createShopProduct(req.body, req.files, req.user.id), 'Shop product created', 201); }
+  catch (err) { next(err); }
+});
+
+router.put('/shop/products/:id', upload.array('images', 10), async (req, res, next) => {
+  try { sendSuccess(res, await service.updateShopProduct(req.params.id, req.body, req.files, req.user.id)); }
+  catch (err) { next(err); }
+});
+
+router.delete('/shop/products/:id', async (req, res, next) => {
+  try { sendSuccess(res, await service.deleteShopProduct(req.params.id)); }
+  catch (err) { next(err); }
+});
+
+// Categories (launch gating via is_active)
+router.get('/shop/categories', async (req, res, next) => {
+  try { sendSuccess(res, await service.getAdminCategories(), 'Categories fetched'); }
+  catch (err) { next(err); }
+});
+
+router.patch('/shop/categories/:id/active', async (req, res, next) => {
+  try { sendSuccess(res, await service.setCategoryActive(req.params.id, req.body.is_active), 'Category updated'); }
+  catch (err) { next(err); }
+});
+
+// Shop Orders
+router.get('/shop/orders', async (req, res, next) => {
+  try {
+    const { orders, pagination } = await service.getShopOrders(req.query);
+    sendSuccess(res, orders, 'Shop orders fetched', 200, pagination);
+  } catch (err) { next(err); }
+});
+
+router.patch('/shop/orders/:id/status', async (req, res, next) => {
+  try { sendSuccess(res, await service.updateShopOrderStatus(req.params.id, req.body.status, req.user.id)); }
   catch (err) { next(err); }
 });
 

@@ -29,6 +29,10 @@ module.exports = (sequelize) => {
     origin_district: DataTypes.STRING(100),
     is_organic: { type: DataTypes.BOOLEAN, defaultValue: false },
     shelf_life_days: DataTypes.INTEGER,
+    tags: { type: DataTypes.JSONB, allowNull: false, defaultValue: [] },
+    // Fixed gram packs for weight-based products: [{ id, label, grams, price }].
+    // Empty => classic unit + price_per_unit pricing.
+    packs: { type: DataTypes.JSONB, allowNull: false, defaultValue: [] },
     added_by_role: { type: DataTypes.ENUM('farmer', 'admin'), allowNull: false },
     is_approved: { type: DataTypes.BOOLEAN, defaultValue: false },
     approved_by: DataTypes.INTEGER.UNSIGNED,

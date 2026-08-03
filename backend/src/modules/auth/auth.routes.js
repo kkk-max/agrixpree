@@ -5,6 +5,7 @@ const { authLimiter } = require('../../middleware/rateLimiter');
 const v = require('./auth.validation');
 
 router.post('/register', authLimiter, validate(v.register), controller.register);
+router.post('/register-customer', authLimiter, validate(v.registerCustomer), controller.registerCustomer);
 router.post('/verify-otp', authLimiter, validate(v.verifyOtp), controller.verifyOtp);
 router.post('/login', authLimiter, validate(v.login), controller.login);
 router.post('/refresh-token', controller.refreshToken);

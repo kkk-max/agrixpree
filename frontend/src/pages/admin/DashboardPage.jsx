@@ -1,8 +1,9 @@
 import { Row, Col, Card, Table, Tag, Typography, Avatar, Skeleton } from 'antd';
-import { TeamOutlined, ShopOutlined, ShoppingOutlined, ClockCircleOutlined, CheckCircleOutlined, RiseOutlined, FallOutlined } from '@ant-design/icons';
+import { RiseOutlined, FallOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboard } from '../../api/admin.api';
 import { formatCurrency, formatDate, getStatusColor, capitalize } from '../../utils/formatters';
+import { getDeliveryStatus } from '../../config/shop';
 
 const { Title, Text } = Typography;
 
@@ -35,14 +36,62 @@ const AdminDashboardPage = () => {
 
   const stats = data?.stats || {};
 
-  const statCards = [
+  // Shop reports & counts — the primary operational metrics.
+  const shopStatCards = [
+    { title: 'To Deliver Now', value: stats.shopOrdersToDeliver, icon: '🚚', gradient: 'linear-gradient(135deg, #fef2f2, #fee2e2)' },
+    { title: 'Pending Shop Orders', value: stats.pendingShopOrders, icon: '🛍️', gradient: 'linear-gradient(135deg, #ecfeff, #cffafe)' },
+    { title: 'Orders Today', value: stats.shopOrdersToday, icon: '📅', gradient: 'linear-gradient(135deg, #fffbeb, #fef3c7)' },
+    { title: 'Delivered', value: stats.deliveredShopOrders, icon: '✅', gradient: 'linear-gradient(135deg, #f0fdf4, #dcfce7)' },
+    { title: 'Total Shop Orders', value: stats.totalShopOrders, icon: '📦', gradient: 'linear-gradient(135deg, #fdf4ff, #fae8ff)' },
+    { title: 'Shop Revenue', value: formatCurrency(stats.shopRevenue), icon: '💰', gradient: 'linear-gradient(135deg, #f0fdfa, #ccfbf1)' },
+  ];
+
+  // Platform-wide metrics (farmers, buyers, procurement).
+  const platformStatCards = [
     { title: 'Total Farmers', value: stats.totalFarmers, icon: '👨‍🌾', gradient: 'linear-gradient(135deg, #f0fdf4, #dcfce7)' },
     { title: 'Total Buyers', value: stats.totalBuyers, icon: '🛒', gradient: 'linear-gradient(135deg, #eff6ff, #dbeafe)' },
     { title: 'Pending KYC', value: stats.pendingVerifications, icon: '🔍', gradient: 'linear-gradient(135deg, #fffbeb, #fef3c7)' },
-    { title: 'Active Orders', value: stats.activeOrders, icon: '📦', gradient: 'linear-gradient(135deg, #fdf4ff, #fae8ff)' },
     { title: 'Active Products', value: stats.activeProducts, icon: '🌾', gradient: 'linear-gradient(135deg, #f0fdfa, #ccfbf1)' },
     { title: 'Pending Approvals', value: stats.pendingApprovals, icon: '⏳', gradient: 'linear-gradient(135deg, #fff7ed, #ffedd5)' },
     { title: 'Draft Products', value: stats.draftProducts, icon: '📝', gradient: 'linear-gradient(135deg, #fdf2f8, #fce7f3)' },
+  ];
+
+  const shopStatusColors = {
+    pending: 'orange', confirmed: 'blue', out_for_delivery: 'purple', delivered: 'green', cancelled: 'red',
+  };
+
+  const shopOrderColumns = [
+    {
+      title: 'Order', dataIndex: 'uuid', key: 'uuid',
+      render: (v, r) => {
+        const d = getDeliveryStatus(r);
+        return (
+          <div>
+            <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13, color: '#16a34a' }}>#{v?.slice(0, 8).toUpperCase()}</span>
+            {d.priority && <Tag color="red" style={{ marginLeft: 6, fontWeight: 700 }}>{d.label}</Tag>}
+          </div>
+        );
+      }
+    },
+    {
+      title: 'Customer', key: 'customer',
+      render: (_, r) => (
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 13 }}>{r.customer_name}</div>
+          <div style={{ fontSize: 12, color: '#9ca3af' }}>{r.customer_phone}</div>
+        </div>
+      )
+    },
+    {
+      title: 'Items', key: 'items',
+      render: (_, r) => <span style={{ fontWeight: 600 }}>{(r.items || []).length}</span>
+    },
+    { title: 'Total', dataIndex: 'total_amount', key: 'total', render: v => <span style={{ fontWeight: 700, color: '#16a34a' }}>{formatCurrency(v)}</span> },
+    {
+      title: 'Status', dataIndex: 'status', key: 'status',
+      render: v => <Tag color={shopStatusColors[v] || 'default'} style={{ textTransform: 'capitalize' }}>{(v || '').replace('_', ' ')}</Tag>
+    },
+    { title: 'Date', key: 'date', render: (_, r) => <span style={{ fontSize: 12, color: '#6b7280' }}>{formatDate(r.created_at || r.createdAt)}</span> },
   ];
 
   const orderColumns = [
@@ -96,9 +145,38 @@ const AdminDashboardPage = () => {
         </div>
       </div>
 
+      {/* Shop reports & counts — primary */}
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', margin: '4px 0 12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>🛍️ Shop Reports</div>
+      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+        {shopStatCards.map(s => (
+          <Col xs={12} sm={8} lg={4} key={s.title}>
+            <StatCard {...s} isLoading={isLoading} />
+          </Col>
+        ))}
+      </Row>
+
+      {/* Recent shop orders — surfaced above platform activity */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        {statCards.map(s => (
-          <Col xs={12} sm={8} lg={6} key={s.title}>
+        <Col xs={24}>
+          <Card
+            title={<span style={{ fontWeight: 700 }}>🛍️ Recent Shop Orders</span>}
+            extra={<Text style={{ fontSize: 12, color: '#9ca3af' }}>{data?.recentShopOrders?.length || 0} records</Text>}
+          >
+            <Table
+              dataSource={data?.recentShopOrders || []} columns={shopOrderColumns} rowKey="uuid"
+              pagination={false} size="small" loading={isLoading}
+              rowClassName={(r) => (getDeliveryStatus(r).priority ? 'dash-priority-row' : '')}
+              locale={{ emptyText: <div style={{ padding: '20px', color: '#9ca3af', fontSize: 13 }}>No shop orders yet</div> }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Platform-wide metrics */}
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', margin: '4px 0 12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Platform</div>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        {platformStatCards.map(s => (
+          <Col xs={12} sm={8} lg={4} key={s.title}>
             <StatCard {...s} isLoading={isLoading} />
           </Col>
         ))}
@@ -130,6 +208,10 @@ const AdminDashboardPage = () => {
           </Card>
         </Col>
       </Row>
+
+      <style>{`
+        .dash-priority-row > td { background: #fef2f2 !important; }
+      `}</style>
     </div>
   );
 };

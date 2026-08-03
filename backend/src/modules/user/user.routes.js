@@ -23,6 +23,8 @@ router.put('/me', async (req, res, next) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (req.body.name) await user.update({ name: req.body.name });
+    if (req.body.address !== undefined) await user.update({ address: req.body.address });
+    if (req.body.pincode !== undefined) await user.update({ pincode: req.body.pincode });
 
     if (req.user.role === 'farmer' && req.body.farmerProfile) {
       await FarmerProfile.upsert({ user_id: req.user.id, ...req.body.farmerProfile });

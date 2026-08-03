@@ -4,7 +4,7 @@ module.exports = (sequelize) => {
   const User = sequelize.define('User', {
     id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
     uuid: { type: DataTypes.CHAR(36), allowNull: false, unique: true },
-    role: { type: DataTypes.ENUM('farmer', 'buyer', 'admin'), allowNull: false },
+    role: { type: DataTypes.ENUM('farmer', 'buyer', 'admin', 'customer'), allowNull: false },
     name: { type: DataTypes.STRING(100), allowNull: false },
     email: { type: DataTypes.STRING(150), unique: true },
     mobile: { type: DataTypes.STRING(15), allowNull: false, unique: true },
@@ -13,6 +13,8 @@ module.exports = (sequelize) => {
     is_verified: { type: DataTypes.BOOLEAN, defaultValue: false },
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
     kyc_status: { type: DataTypes.ENUM('pending', 'in_progress', 'approved', 'rejected'), defaultValue: 'pending' },
+    address: { type: DataTypes.TEXT },
+    pincode: { type: DataTypes.STRING(10) },
     last_login_at: { type: DataTypes.DATE }
   }, {
     tableName: 'users',

@@ -53,6 +53,40 @@ const register = async ({ name, mobile, email, password, role }) => {
   return { message: 'OTP sent to your email', userId: user.uuid };
 };
 
+// Instant, no-OTP signup used by the shop checkout flow. Creates a verified
+// 'customer' account and logs them in immediately (returns tokens like login).
+const registerCustomer = async ({ name, mobile, email, password }) => {
+  const existingMobile = await User.findOne({ where: { mobile } });
+  if (existingMobile) throw new AppError('Mobile number already registered. Please log in instead.', 409, 'CONFLICT');
+  if (email) {
+    const existingEmail = await User.findOne({ where: { email } });
+    if (existingEmail) throw new AppError('Email already registered. Please log in instead.', 409, 'CONFLICT');
+  }
+
+  const password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  const user = await User.create({
+    uuid: uuidv4(),
+    name,
+    mobile,
+    email: email || null,
+    password_hash,
+    role: 'customer',
+    is_verified: true
+  });
+
+  await Wallet.create({ user_id: user.id });
+
+  const { accessToken, refreshToken } = generateTokens(user);
+  const expires_at = dayjs().add(7, 'day').toDate();
+  await RefreshToken.create({ user_id: user.id, token: refreshToken, expires_at });
+
+  return {
+    accessToken,
+    refreshToken,
+    user: { id: user.uuid, name: user.name, role: user.role, mobile: user.mobile, email: user.email, isVerified: user.is_verified }
+  };
+};
+
 const verifyOtp = async ({ email, code, purpose }) => {
   const otpRecord = await OtpCode.findOne({ where: { email, code, purpose, is_used: false }, order: [['created_at', 'DESC']] });
   if (!otpRecord) throw new AppError('Invalid OTP', 400, 'INVALID_OTP');
@@ -130,4 +164,4 @@ const resetPassword = async ({ email, code, password }) => {
   return { message: 'Password reset successful' };
 };
 
-module.exports = { register, verifyOtp, login, refreshToken: refreshTokenService, logout, forgotPassword, resetPassword };
+module.exports = { register, registerCustomer, verifyOtp, login, refreshToken: refreshTokenService, logout, forgotPassword, resetPassword };

@@ -5,13 +5,15 @@ import {
   DashboardOutlined, ShoppingOutlined, ShopOutlined, UnorderedListOutlined,
   UserOutlined, WalletOutlined, BellOutlined, LogoutOutlined, SafetyCertificateOutlined,
   TeamOutlined, CheckCircleOutlined, BarChartOutlined, ThunderboltOutlined,
-  MenuFoldOutlined, MenuUnfoldOutlined, SettingOutlined
+  MenuFoldOutlined, MenuUnfoldOutlined, SettingOutlined,
+  ShoppingCartOutlined, OrderedListOutlined, AppstoreOutlined
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { message } from 'antd';
 import useAuthStore from '../../store/authStore';
 import { logout } from '../../api/auth.api';
 import { getNotifications } from '../../api/notification.api';
+import agrixpreeLogo from '../../assets/agrixpree-logo.png';
 
 const { Sider, Header, Content } = Layout;
 
@@ -33,11 +35,11 @@ const menuByRole = {
     { key: '/admin/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/admin/users', icon: <TeamOutlined />, label: 'Users' },
     { key: '/admin/kyc', icon: <SafetyCertificateOutlined />, label: 'KYC Review' },
-    { key: '/admin/products', icon: <ShopOutlined />, label: 'Products' },
-    { key: '/admin/orders', icon: <UnorderedListOutlined />, label: 'Orders' },
-    { key: '/admin/quality-checks', icon: <CheckCircleOutlined />, label: 'Quality Checks' },
+    { key: '/admin/products', icon: <ShopOutlined />, label: 'Farmer Products' },
     { key: '/admin/procurement', icon: <ThunderboltOutlined />, label: 'Procurement' },
-    { key: '/admin/reports', icon: <BarChartOutlined />, label: 'Reports' },
+    { key: '/admin/shop-categories', icon: <AppstoreOutlined />, label: 'Categories' },
+    { key: '/admin/shop-products', icon: <ShoppingCartOutlined />, label: 'Shop Products' },
+    { key: '/admin/shop-orders', icon: <OrderedListOutlined />, label: 'Orders' },
   ]
 };
 
@@ -104,11 +106,13 @@ const AppLayout = ({ children }) => {
           display: 'flex', alignItems: 'center', gap: 12
         }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            background: 'linear-gradient(135deg, #16a34a, #22c55e)',
+            width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+            background: '#fff', padding: 5,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, boxShadow: '0 2px 8px rgba(22,163,74,0.4)'
-          }}>🌾</div>
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+          }}>
+            <img src={agrixpreeLogo} alt="AgriXpree" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           {!collapsed && (
             <div>
               <div style={{ color: '#fff', fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>AgriXpree</div>

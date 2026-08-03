@@ -8,6 +8,13 @@ const register = Joi.object({
   role: Joi.string().valid('farmer', 'buyer').required()
 });
 
+const registerCustomer = Joi.object({
+  name: Joi.string().min(2).max(100).required(),
+  email: Joi.string().email().optional().allow(''),
+  mobile: Joi.string().pattern(/^[6-9]\d{9}$/).required().messages({ 'string.pattern.base': 'Enter a valid 10-digit Indian mobile number' }),
+  password: Joi.string().min(8).required()
+});
+
 const verifyOtp = Joi.object({
   email: Joi.string().email().required(),
   code: Joi.string().length(6).required(),
@@ -29,4 +36,4 @@ const resetPassword = Joi.object({
 
 const refreshToken = Joi.object({ refreshToken: Joi.string().required() });
 
-module.exports = { register, verifyOtp, login, forgotPassword, resetPassword, refreshToken };
+module.exports = { register, registerCustomer, verifyOtp, login, forgotPassword, resetPassword, refreshToken };
