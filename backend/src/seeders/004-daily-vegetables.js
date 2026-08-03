@@ -11,7 +11,7 @@ const PRODUCTS = [
   { cat: 2, name: 'Tomato',           unit: 'kg',    price: 50,  qty: 100, organic: false, desc: 'Vine-ripened tomatoes.'                        },
   { cat: 2, name: 'Ringan (Brinjal)', unit: 'kg',    price: 50,  qty: 100, organic: false, desc: 'Fresh brinjal (eggplant).'                     },
   { cat: 2, name: 'Spinach (Palak)',  unit: 'kg',    price: 0,   qty: 0,   organic: false, desc: 'Fresh spinach — not available today.',
-    status: 'inactive' },
+    status: 'out_of_stock' },
   { cat: 2, name: 'Gajar (Carrot)',   unit: 'kg',    price: 70,  qty: 100, organic: false, desc: 'Fresh crunchy carrots.'                        },
   { cat: 2, name: 'Beetroot',         unit: 'kg',    price: 70,  qty: 100, organic: false, desc: 'Fresh beetroot.'                               },
   { cat: 2, name: 'Kakdi (Cucumber)', unit: 'kg',    price: 70,  qty: 100, organic: false, desc: 'Crisp fresh cucumbers.'                        },
