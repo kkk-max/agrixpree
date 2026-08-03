@@ -1,9 +1,10 @@
 import { Form, Input, Button, Typography, message, Divider } from 'antd';
 import { MobileOutlined, LockOutlined, ArrowRightOutlined } from '@ant-design/icons';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { login } from '../../api/auth.api';
 import useAuthStore from '../../store/authStore';
+import agrixpreeLogo from '../../assets/agrixpree-logo.png';
 
 const { Title, Text } = Typography;
 
@@ -15,14 +16,19 @@ const features = [
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setAuth } = useAuthStore();
   const [form] = Form.useForm();
 
   const loginMutation = useMutation({
     mutationFn: (data) => login(data).then(r => r.data),
     onSuccess: (data) => {
-      setAuth(data.data.user, data.data.accessToken);
-      navigate(`/${data.data.user.role}/dashboard`);
+      const { user } = data.data;
+      setAuth(user, data.data.accessToken);
+      const from = location.state?.from;
+      // Shop customers have no dashboard — return them where they came from, or the storefront.
+      if (user.role === 'customer') navigate(from && from.startsWith('/store') ? from : '/');
+      else navigate(`/${user.role}/dashboard`);
     },
     onError: (err) => message.error(err.response?.data?.error?.message || 'Login failed')
   });
@@ -42,7 +48,7 @@ const LoginPage = () => {
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 50%)' }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 64 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, backdropFilter: 'blur(10px)' }}>🌾</div>
+            <div style={{ width: 60, height: 60, borderRadius: 14, background: '#fff', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.15)' }}><img src={agrixpreeLogo} alt="AgriXpree" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
             <div>
               <div style={{ color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1 }}>AgriXpree</div>
               <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 2 }}>Farm Fresh Marketplace</div>
@@ -81,7 +87,7 @@ const LoginPage = () => {
         <div style={{ width: '100%', maxWidth: 360 }}>
           <div style={{ marginBottom: 40 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #16a34a, #22c55e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🌾</div>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: '#fff', padding: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><img src={agrixpreeLogo} alt="AgriXpree" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
               <span style={{ fontWeight: 800, fontSize: 18, color: '#111827' }}>AgriXpree</span>
             </div>
             <Title level={2} style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 800, color: '#111827', letterSpacing: '-0.3px' }}>Welcome back</Title>

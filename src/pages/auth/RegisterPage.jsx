@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { UserOutlined, MobileOutlined, LockOutlined, ArrowRightOutlined, CheckOutlined } from '@ant-design/icons';
 import { register, verifyOtp } from '../../api/auth.api';
+import agrixpreeLogo from '../../assets/agrixpree-logo.png';
 
 const { Title, Text } = Typography;
 
@@ -32,7 +33,7 @@ const RegisterPage = () => {
         {/* Brand */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #16a34a, #22c55e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, boxShadow: '0 4px 12px rgba(22,163,74,0.3)' }}>🌾</div>
+            <div style={{ width: 56, height: 56, borderRadius: 14, background: '#fff', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}><img src={agrixpreeLogo} alt="AgriXpree" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
             <span style={{ fontWeight: 800, fontSize: 20, color: '#111827' }}>AgriXpree</span>
           </div>
         </div>

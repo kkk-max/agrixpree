@@ -1,6 +1,7 @@
 import client from './client';
 
 export const register = (data) => client.post('/auth/register', data);
+export const registerCustomer = (data) => client.post('/auth/register-customer', data);
 export const verifyOtp = (data) => client.post('/auth/verify-otp', data);
 export const login = (data) => client.post('/auth/login', data);
 export const logout = () => client.post('/auth/logout');
