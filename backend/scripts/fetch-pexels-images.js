@@ -3,7 +3,7 @@
 // Run: PEXELS_KEY=your_key NODE_ENV=production node scripts/fetch-pexels-images.js
 require('dotenv').config({ path: __dirname + '/../.env' });
 const https = require('https');
-const mysql = require('mysql2/promise');
+const { Client } = require('pg');
 
 const PEXELS_KEY = process.env.PEXELS_KEY;
 if (!PEXELS_KEY) { console.error('Set PEXELS_KEY env var'); process.exit(1); }
@@ -58,14 +58,16 @@ function pexelsSearch(query) {
 }
 
 async function main() {
-  const conn = await mysql.createConnection({
+  const conn = new Client({
     host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
+    user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME,
+    port: parseInt(process.env.DB_PORT || '5432'),
   });
+  await conn.connect();
 
-  const [products] = await conn.query("SELECT id, slug FROM products WHERE slug LIKE '%-prod'");
+  const { rows: products } = await conn.query("SELECT id, slug FROM products WHERE slug LIKE '%-prod'");
   if (!products.length) { console.log('No products found.'); process.exit(0); }
 
   let updated = 0;
@@ -77,7 +79,7 @@ async function main() {
     if (!photo) { console.log(`NO RESULT ${p.slug}`); continue; }
 
     await conn.query(
-      'UPDATE product_images SET image_url=?, thumbnail_url=? WHERE product_id=?',
+      'UPDATE product_images SET image_url=$1, thumbnail_url=$2 WHERE product_id=$3',
       [photo.large, photo.medium, p.id]
     );
     console.log(`OK  ${p.slug}`);
