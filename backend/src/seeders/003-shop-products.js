@@ -58,8 +58,8 @@ const PRODUCTS = [
   { cat: 2, name: 'Cabbage', unit: 'kg', price: 5.00, qty: 200, organic: false, desc: 'Fresh cabbage heads for sabzis, salads, and stir-fries.', packs: mkPacks([[100, 5.00], [250, 12.50], [500, 25.00], [1000, 50]]) },
   { cat: 2, name: 'Karela', unit: 'kg', price: 8.00, qty: 100, organic: false, desc: 'Fresh bitter gourd, a healthy addition to your diet.', packs: mkPacks([[100, 8.00], [250, 20.00], [500, 40.00], [1000, 80]]) },
   { cat: 2, name: 'Kakoda', unit: 'kg', price: 20.00, qty: 70, organic: false, desc: 'Spiny gourd (kakoda), a seasonal delicacy.', packs: mkPacks([[100, 20.00], [250, 50.00], [500, 100.00], [1000, 200]]) },
-  // Spinach is currently not available per rate chart
-  { cat: 2, name: 'Spinach (Palak)', unit: 'kg', price: 50, qty: 0, organic: false, desc: 'Tender spinach leaves — currently not available.', status: 'inactive' },
+  // Spinach is currently not available per rate chart — qty 0 = out of stock
+  { cat: 2, name: 'Spinach (Palak)', unit: 'kg', price: 50, qty: 0, organic: false, desc: 'Tender spinach leaves — currently not available.' },
 ];
 
 module.exports = {
@@ -81,7 +81,7 @@ module.exports = {
         minimum_order_qty: 1,
         // JSONB — stringify so the raw bulkInsert casts it correctly.
         packs: JSON.stringify(p.packs || []),
-        status: p.status || 'active',
+        status: 'active',
         is_draft: false,
         is_organic: p.organic,
         added_by_role: 'admin',
