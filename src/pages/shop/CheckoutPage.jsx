@@ -3,12 +3,13 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Form, Input, Button, message, Divider } from 'antd';
 import { CheckCircleFilled } from '@ant-design/icons';
-import { placeOrder, getShopProduct } from '../../api/shop.api';
+import { placeOrder, getShopProduct, getDeliveryPincodes } from '../../api/shop.api';
 import { getMe } from '../../api/profile.api';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
 import StoreHeader from '../../components/shop/StoreHeader';
-import { DELIVERY_PINCODES, computeDelivery, FREE_DELIVERY_THRESHOLD } from '../../config/shop';
+import StoreFooter from '../../components/shop/StoreFooter';
+import { computeDelivery, computeHandling, FREE_DELIVERY_THRESHOLD, HANDLING_CHARGE_PERCENT } from '../../config/shop';
 import { fmtQty } from '../../config/units';
 
 const { TextArea } = Input;
@@ -30,7 +31,15 @@ const CheckoutPage = () => {
 
   const subtotal = getTotal();
   const { fee: deliveryFee, isFree, remaining } = computeDelivery(subtotal);
-  const grandTotal = subtotal + deliveryFee;
+  const handlingFee = computeHandling(subtotal);
+  const grandTotal = subtotal + deliveryFee + handlingFee;
+
+  // Serviceable pincodes are admin-managed (Configuration > Pincodes) rather
+  // than hardcoded, so the storefront checkout stays in sync with the admin list.
+  const { data: deliveryPincodes = [] } = useQuery({
+    queryKey: ['delivery-pincodes'],
+    queryFn: getDeliveryPincodes,
+  });
 
   // Prefill saved address (and confirm its pincode eligibility) once loaded.
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: getMe, enabled: isAuthenticated });
@@ -42,20 +51,20 @@ const CheckoutPage = () => {
     if (saved.pincode) patch.pincode = saved.pincode;
     if (Object.keys(patch).length) form.setFieldsValue(patch);
     if (saved.pincode) {
-      const m = DELIVERY_PINCODES.find(p => p.pincode === saved.pincode);
+      const m = deliveryPincodes.find(p => p.pincode === saved.pincode);
       setPincodeStatus(m ? { valid: true, area: m.area } : null);
     }
-  }, [me, form]);
+  }, [me, form, deliveryPincodes]);
 
   const validatePincode = (value) => {
     if (!value || value.length < 6) { setPincodeStatus(null); return; }
-    const match = DELIVERY_PINCODES.find(p => p.pincode === value.trim());
+    const match = deliveryPincodes.find(p => p.pincode === value.trim());
     setPincodeStatus(match ? { valid: true, area: match.area } : { valid: false });
   };
 
   const handleSubmit = async (values) => {
     if (items.length === 0) { message.error('Your cart is empty'); return; }
-    const pincodeMatch = DELIVERY_PINCODES.find(p => p.pincode === values.pincode?.trim());
+    const pincodeMatch = deliveryPincodes.find(p => p.pincode === values.pincode?.trim());
     if (!pincodeMatch) {
       message.error('We do not deliver to this pincode. Please choose a valid delivery area.');
       return;
@@ -176,7 +185,7 @@ const CheckoutPage = () => {
                 rules={[
                   { required: true, message: 'Please enter your pincode' },
                   { pattern: /^\d{6}$/, message: 'Enter a valid 6-digit pincode' },
-                  { validator: (_, value) => (!value || value.length < 6 || DELIVERY_PINCODES.find(p => p.pincode === value.trim())) ? Promise.resolve() : Promise.reject(new Error('Sorry, we do not deliver to this pincode')) },
+                  { validator: (_, value) => (!value || value.length < 6 || deliveryPincodes.find(p => p.pincode === value.trim())) ? Promise.resolve() : Promise.reject(new Error('Sorry, we do not deliver to this pincode')) },
                 ]}
               >
                 <Input
@@ -210,7 +219,7 @@ const CheckoutPage = () => {
 
             <div style={{ marginTop: 24, padding: 18, background: '#f9fafb', borderRadius: 14, border: '1px solid #e5e7eb' }}>
               <div style={{ fontWeight: 700, color: '#374151', fontSize: 13, marginBottom: 10 }}>📍 Available Delivery Areas</div>
-              {DELIVERY_PINCODES.map(p => (
+              {deliveryPincodes.map(p => (
                 <div key={p.pincode} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280', marginBottom: 4, gap: 12 }}>
                   <span>{p.area}</span>
                   <span style={{ fontFamily: 'monospace', color: '#374151', fontWeight: 600 }}>{p.pincode}</span>
@@ -246,6 +255,10 @@ const CheckoutPage = () => {
               <span style={{ color: '#111827', fontWeight: 600 }}>₹{subtotal.toFixed(2)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: '#6b7280', fontSize: 14 }}>
+              <span>Packing &amp; Handling ({HANDLING_CHARGE_PERCENT}%)</span>
+              <span style={{ color: '#111827', fontWeight: 600 }}>₹{handlingFee.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: '#6b7280', fontSize: 14 }}>
               <span>Delivery</span>
               {isFree
                 ? <span style={{ color: '#16a34a', fontWeight: 700 }}>FREE</span>
@@ -265,6 +278,8 @@ const CheckoutPage = () => {
           </div>
         </div>
       </div>
+
+      <StoreFooter />
 
       <style>{`
         @media (max-width: 768px) {

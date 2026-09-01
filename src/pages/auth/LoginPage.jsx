@@ -47,7 +47,10 @@ const LoginPage = () => {
       >
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 50%)' }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 64 }}>
+          <div
+            onClick={() => navigate('/')}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 64, cursor: 'pointer', width: 'fit-content' }}
+          >
             <div style={{ width: 60, height: 60, borderRadius: 14, background: '#fff', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.15)' }}><img src={agrixpreeLogo} alt="AgriXpree" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
             <div>
               <div style={{ color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1 }}>AgriXpree</div>
@@ -86,7 +89,10 @@ const LoginPage = () => {
       <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 40px', background: '#fff' }}>
         <div style={{ width: '100%', maxWidth: 360 }}>
           <div style={{ marginBottom: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+            <div
+              onClick={() => navigate('/')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28, cursor: 'pointer', width: 'fit-content' }}
+            >
               <div style={{ width: 48, height: 48, borderRadius: 12, background: '#fff', padding: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><img src={agrixpreeLogo} alt="AgriXpree" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
               <span style={{ fontWeight: 800, fontSize: 18, color: '#111827' }}>AgriXpree</span>
             </div>

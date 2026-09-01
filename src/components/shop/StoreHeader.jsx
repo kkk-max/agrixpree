@@ -1,19 +1,44 @@
 import { useNavigate } from 'react-router-dom';
-import { Dropdown, Badge } from 'antd';
-import { ShoppingCartOutlined, UserOutlined, LoginOutlined, LogoutOutlined, ProfileOutlined, DownOutlined } from '@ant-design/icons';
+import { Dropdown, Badge, Empty } from 'antd';
+import { ShoppingCartOutlined, UserOutlined, LoginOutlined, LogoutOutlined, ProfileOutlined, DownOutlined, BellOutlined } from '@ant-design/icons';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
 import { logout as apiLogout } from '../../api/auth.api';
+import { getNotifications, markRead, markAllRead } from '../../api/notification.api';
+import { formatDateTime } from '../../utils/formatters';
 import agrixpreeLogo from '../../assets/agrixpree-logo.png';
 
 // Shared storefront header used across all shop pages.
 // Right side: Cart always; Login (guest) or profile menu (logged-in customer).
 const StoreHeader = ({ subtitle = 'Farm to Door' }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { getItemCount, getTotal } = useCartStore();
   const { isAuthenticated, user, logout } = useAuthStore();
   const itemCount = getItemCount();
   const total = getTotal();
+
+  const { data: notifData } = useQuery({
+    queryKey: ['store-notifications'],
+    queryFn: () => getNotifications({ limit: 8 }).then(r => r.data),
+    enabled: isAuthenticated,
+    refetchInterval: 30000
+  });
+  const notifications = notifData?.notifications || [];
+  const unreadCount = notifData?.unreadCount || 0;
+
+  const handleNotifClick = async (n) => {
+    if (!n.is_read) {
+      await markRead(n.id);
+      queryClient.invalidateQueries({ queryKey: ['store-notifications'] });
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    await markAllRead();
+    queryClient.invalidateQueries({ queryKey: ['store-notifications'] });
+  };
 
   const handleLogout = async () => {
     try { await apiLogout(); } catch { /* ignore */ }
@@ -27,6 +52,39 @@ const StoreHeader = ({ subtitle = 'Farm to Door' }) => {
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, label: 'Logout', danger: true, onClick: handleLogout },
   ];
+
+  const notifPanel = (
+    <div style={{ width: 320, maxHeight: 420, overflowY: 'auto', background: '#fff', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}>
+        <span style={{ fontWeight: 700, fontSize: 14, color: '#111827' }}>Notifications</span>
+        {unreadCount > 0 && (
+          <span onClick={handleMarkAllRead} style={{ fontSize: 12, color: '#16a34a', cursor: 'pointer', fontWeight: 600 }}>
+            Mark all read
+          </span>
+        )}
+      </div>
+      {notifications.length === 0 ? (
+        <div style={{ padding: 24 }}>
+          <Empty description="No notifications yet" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+      ) : (
+        notifications.map((n) => (
+          <div
+            key={n.id}
+            onClick={() => handleNotifClick(n)}
+            style={{
+              padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid #f5f5f5',
+              background: n.is_read ? '#fff' : '#f0fdf4'
+            }}
+          >
+            <div style={{ fontWeight: 600, fontSize: 13, color: '#111827' }}>{n.title}</div>
+            <div style={{ fontSize: 12.5, color: '#4b5563', marginTop: 2 }}>{n.message}</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>{formatDateTime(n.created_at)}</div>
+          </div>
+        ))
+      )}
+    </div>
+  );
 
   const iconBtn = {
     display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
@@ -66,6 +124,16 @@ const StoreHeader = ({ subtitle = 'Farm to Door' }) => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {isAuthenticated && (
+          <Dropdown trigger={['click']} placement="bottomRight" dropdownRender={() => notifPanel}>
+            <div style={iconBtn}>
+              <Badge count={unreadCount} size="small" offset={[2, -2]} color="#f59e0b">
+                <BellOutlined style={{ fontSize: 16, color: '#fff' }} />
+              </Badge>
+            </div>
+          </Dropdown>
+        )}
+
         {isAuthenticated ? (
           <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
             <div style={iconBtn}>
@@ -77,7 +145,7 @@ const StoreHeader = ({ subtitle = 'Farm to Door' }) => {
             </div>
           </Dropdown>
         ) : (
-          <div style={iconBtn} onClick={() => navigate('/login', { state: { from: window.location.pathname } })}>
+          <div style={iconBtn} onClick={() => navigate('/store/signup', { state: { tab: 'login', from: window.location.pathname } })}>
             <LoginOutlined style={{ fontSize: 16 }} />
             <span className="sh-hide-sm">Login</span>
           </div>

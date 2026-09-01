@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import RoleRoute from './components/common/RoleRoute';
 import AppLayout from './components/common/AppLayout';
+import OneSignalUserSync from './components/common/OneSignalUserSync';
 import useAuthStore from './store/authStore';
 
 import LoginPage from './pages/auth/LoginPage';
@@ -30,9 +31,11 @@ import CheckoutPage from './pages/shop/CheckoutPage';
 import OrderSuccessPage from './pages/shop/OrderSuccessPage';
 import CustomerSignupPage from './pages/shop/CustomerSignupPage';
 import AccountPage from './pages/shop/AccountPage';
+import TermsPage from './pages/shop/TermsPage';
 import ShopProductsPage from './pages/admin/ShopProductsPage';
 import ShopOrdersPage from './pages/admin/ShopOrdersPage';
 import ShopCategoriesPage from './pages/admin/ShopCategoriesPage';
+import ConfigurationPage from './pages/admin/ConfigurationPage';
 
 const Wrapped = ({ children }) => (
   <ProtectedRoute>
@@ -52,6 +55,7 @@ const IndexRoute = () => {
 
 const App = () => (
   <BrowserRouter>
+    <OneSignalUserSync />
     <Routes>
       <Route path="/" element={<IndexRoute />} />
       <Route path="/login" element={<LoginPage />} />
@@ -78,6 +82,7 @@ const App = () => (
       <Route path="/admin/shop-categories" element={<Wrapped><RoleRoute roles={['admin']}><ShopCategoriesPage /></RoleRoute></Wrapped>} />
       <Route path="/admin/shop-products" element={<Wrapped><RoleRoute roles={['admin']}><ShopProductsPage /></RoleRoute></Wrapped>} />
       <Route path="/admin/shop-orders" element={<Wrapped><RoleRoute roles={['admin']}><ShopOrdersPage /></RoleRoute></Wrapped>} />
+      <Route path="/admin/configuration" element={<Wrapped><RoleRoute roles={['admin']}><ConfigurationPage /></RoleRoute></Wrapped>} />
 
       {/* Public shop routes */}
       <Route path="/store" element={<Navigate to="/" replace />} />
@@ -86,6 +91,7 @@ const App = () => (
       <Route path="/store/checkout" element={<CheckoutPage />} />
       <Route path="/store/account" element={<AccountPage />} />
       <Route path="/store/order-success" element={<OrderSuccessPage />} />
+      <Route path="/terms" element={<TermsPage />} />
 
       {/* Common */}
       <Route path="/notifications" element={<Wrapped><NotificationsPage /></Wrapped>} />

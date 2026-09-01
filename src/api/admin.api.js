@@ -20,3 +20,9 @@ export const updateProcurementStatus = (id, data) => client.patch(`/admin/procur
 // Resale
 export const getResaleListings = (params) => client.get('/admin/resale-listings', { params });
 export const createResaleListing = (procurementId, data) => client.post(`/admin/procurements/${procurementId}/relist`, data);
+
+// Configuration: Pincodes
+export const getAdminPincodes = () => client.get('/admin/config/pincodes');
+export const createPincode = (data) => client.post('/admin/config/pincodes', data);
+export const updatePincode = (id, data) => client.put(`/admin/config/pincodes/${id}`, data);
+export const deletePincode = (id) => client.delete(`/admin/config/pincodes/${id}`);

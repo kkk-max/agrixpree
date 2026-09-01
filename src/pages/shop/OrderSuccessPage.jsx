@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Divider } from 'antd';
+import StoreFooter from '../../components/shop/StoreFooter';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -204,6 +205,8 @@ const OrderSuccessPage = () => {
           Continue Shopping
         </button>
       </div>
+
+      <StoreFooter />
 
       <style>{`
         @keyframes successPop {

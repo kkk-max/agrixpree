@@ -5,8 +5,9 @@ import { ShoppingCartOutlined, DeleteOutlined } from '@ant-design/icons';
 import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
 import StoreHeader from '../../components/shop/StoreHeader';
+import StoreFooter from '../../components/shop/StoreFooter';
 import { getShopProducts } from '../../api/shop.api';
-import { computeDelivery, FREE_DELIVERY_THRESHOLD } from '../../config/shop';
+import { computeDelivery, computeHandling, FREE_DELIVERY_THRESHOLD, HANDLING_CHARGE_PERCENT } from '../../config/shop';
 import { fmtQty } from '../../config/units';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -66,7 +67,8 @@ const CartPage = () => {
   const subtotal = getTotal();
   const itemCount = getItemCount();
   const { fee: deliveryFee, isFree, remaining } = computeDelivery(subtotal);
-  const grandTotal = subtotal + deliveryFee;
+  const handlingFee = computeHandling(subtotal);
+  const grandTotal = subtotal + deliveryFee + handlingFee;
   const progressPct = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
 
   // Guests must create an account before providing an address & placing the order.
@@ -151,6 +153,10 @@ const CartPage = () => {
                   <span>Subtotal</span>
                   <span style={{ color: '#111827', fontWeight: 600 }}>₹{subtotal.toFixed(2)}</span>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#6b7280', fontSize: 14, marginBottom: 8 }}>
+                  <span>Packing &amp; Handling ({HANDLING_CHARGE_PERCENT}%)</span>
+                  <span style={{ color: '#111827', fontWeight: 600 }}>₹{handlingFee.toFixed(2)}</span>
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <span style={{ color: '#6b7280', fontSize: 14 }}>Delivery</span>
                   {isFree ? <span style={{ color: '#16a34a', fontWeight: 700, fontSize: 14 }}>FREE</span> : <span style={{ color: '#111827', fontWeight: 600, fontSize: 14 }}>₹{deliveryFee.toFixed(2)}</span>}
@@ -190,13 +196,16 @@ const CartPage = () => {
               <div style={{ background: '#f0faf4', border: '1px solid #bbf7d0', borderRadius: 14, padding: 16, fontSize: 13, color: '#374151' }}>
                 <div style={{ fontWeight: 700, marginBottom: 6, color: '#16a34a' }}>📦 Delivery Info</div>
                 <div style={{ marginBottom: 4 }}>💵 Cash on Delivery only</div>
-                <div style={{ marginBottom: 4 }}>🚚 FREE delivery above ₹{FREE_DELIVERY_THRESHOLD} (else ₹50)</div>
+                <div style={{ marginBottom: 4 }}>🚚 FREE delivery above ₹{FREE_DELIVERY_THRESHOLD} (else ₹20)</div>
+                <div style={{ marginBottom: 4 }}>📦 {HANDLING_CHARGE_PERCENT}% Packing &amp; Handling charge on every order</div>
                 <div>📍 Bakrol, Karamsad, Vidyanagar, Jitodia, Lambhvel</div>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      <StoreFooter />
 
       <style>{`
         @media (max-width: 768px) {

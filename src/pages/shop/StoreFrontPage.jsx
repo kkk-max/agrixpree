@@ -6,6 +6,7 @@ import { ShoppingCartOutlined, SearchOutlined, MinusOutlined, PlusOutlined } fro
 import { getShopCategories, getShopProducts } from '../../api/shop.api';
 import useCartStore from '../../store/cartStore';
 import StoreHeader from '../../components/shop/StoreHeader';
+import StoreFooter from '../../components/shop/StoreFooter';
 import ProductDetailModal from '../../components/shop/ProductDetailModal';
 import { FREE_DELIVERY_THRESHOLD } from '../../config/shop';
 import { getUnitConfig, effectiveMin, fmtQty } from '../../config/units';
@@ -415,6 +416,8 @@ const StoreFrontPage = () => {
           </div>
         )}
       </div>
+
+      <StoreFooter />
 
       {/* Sticky bottom bar (mobile) */}
       {itemCount > 0 && (
