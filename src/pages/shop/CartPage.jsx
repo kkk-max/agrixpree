@@ -15,6 +15,7 @@ const API_URL = import.meta.env.VITE_API_URL || '';
 const getImageSrc = (image) => {
   if (!image) return null;
   if (image.startsWith('http')) return image;
+  if (image.startsWith('/')) return `${API_URL}${image}`;
   return `${API_URL}/uploads/${image}`;
 };
 

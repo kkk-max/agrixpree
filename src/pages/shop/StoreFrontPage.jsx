@@ -29,6 +29,7 @@ const getImageSrc = (images, category) => {
   if (images && images.length > 0) {
     const img = images[0];
     if (img.startsWith('http')) return img;
+    if (img.startsWith('/')) return `${API_URL}${img}`;
     return `${API_URL}/uploads/${img}`;
   }
   return null;

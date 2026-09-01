@@ -13,6 +13,7 @@ import { message } from 'antd';
 import useAuthStore from '../../store/authStore';
 import { logout } from '../../api/auth.api';
 import { getNotifications } from '../../api/notification.api';
+import PushEnableButton from './PushEnableButton';
 import agrixpreeLogo from '../../assets/agrixpree-logo.png';
 
 const { Sider, Header, Content } = Layout;
@@ -170,6 +171,13 @@ const AppLayout = ({ children }) => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <PushEnableButton style={{
+              display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+              color: '#374151', border: '1px solid #e5e7eb', borderRadius: 999,
+              padding: '6px 12px', fontWeight: 600, fontSize: 13, background: '#f9fafb',
+              whiteSpace: 'nowrap'
+            }} />
+
             {/* Notifications */}
             <Badge count={unread} size="small" offset={[-2, 2]}>
               <Button
