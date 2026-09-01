@@ -8,6 +8,7 @@ export const DELIVERY_PINCODES = [
   { pincode: '388120', area: 'Vidyanagar (Vallabh Vidyanagar)' },
   { pincode: '388345', area: 'Jitodia, Anand' },
   { pincode: '387310', area: 'Lambhvel / Boriavi, Anand' },
+  { pincode: '388001', area: 'Anand' },
 ];
 
 // Returns { fee, isFree, remaining } for a given goods subtotal.

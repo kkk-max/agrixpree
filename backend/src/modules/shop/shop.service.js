@@ -6,7 +6,7 @@ const { AppError } = require('../../middleware/errorHandler');
 const { FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } = require('../../config/constants');
 const { effectiveMinOrder } = require('../../config/units');
 
-const DELIVERY_PINCODES = ['388315', '388325', '388120', '388345', '387310'];
+const DELIVERY_PINCODES = ['388315', '388325', '388120', '388345', '387310', '388001'];
 
 const getShopProducts = async (query) => {
   const { page, limit, offset } = getPaginationParams(query);
