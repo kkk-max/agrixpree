@@ -3,7 +3,8 @@ import { Table, Tag, Select, Typography, Tabs, message, Button, Badge } from 'an
 import { ThunderboltFilled } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminGetShopOrders, adminUpdateOrderStatus } from '../../api/shop.api';
-import { getDeliveryStatus, DELIVERY_PINCODES } from '../../config/shop';
+import { getAdminPincodes } from '../../api/admin.api';
+import { getDeliveryStatus } from '../../config/shop';
 
 const { Title, Text } = Typography;
 
@@ -67,6 +68,9 @@ const ShopOrdersPage = () => {
 
   const rawOrders = data?.data || [];
   const totalOrders = data?.pagination?.total || 0;
+
+  const { data: pincodesData } = useQuery({ queryKey: ['admin-pincodes'], queryFn: getAdminPincodes });
+  const pincodes = pincodesData?.data?.data || [];
 
   // Attach delivery classification once, then order by priority (oldest first
   // inside the delivery queue → FIFO) so what must go out sits at the top.
@@ -178,7 +182,13 @@ const ShopOrdersPage = () => {
         );
       })}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10, paddingRight: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, marginTop: 10, paddingRight: 12 }}>
+        <div style={{ fontSize: 13, color: '#6b7280' }}>
+          Packing &amp; Handling: ₹{parseFloat(record.handling_charge || 0).toFixed(2)}
+        </div>
+        <div style={{ fontSize: 13, color: '#6b7280' }}>
+          Delivery: {parseFloat(record.delivery_charge || 0) > 0 ? `₹${parseFloat(record.delivery_charge).toFixed(2)}` : 'FREE'}
+        </div>
         <div style={{ fontWeight: 800, fontSize: 16, color: '#16a34a' }}>
           Total: ₹{parseFloat(record.total_amount || 0).toFixed(2)}
         </div>
@@ -233,7 +243,7 @@ const ShopOrdersPage = () => {
     },
     {
       title: 'Pincode', dataIndex: 'delivery_pincode', key: 'pincode',
-      filters: DELIVERY_PINCODES.map(p => ({ text: `${p.pincode} · ${p.area}`, value: p.pincode })),
+      filters: pincodes.map(p => ({ text: `${p.pincode} · ${p.area || '—'}`, value: p.pincode })),
       onFilter: (val, r) => r.delivery_pincode === val,
       render: (v) => <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{v}</span>,
       width: 90,

@@ -4,10 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tabs, Tag, Spin, Empty, Form, Input, Button, message, Divider } from 'antd';
 import { CheckCircleFilled } from '@ant-design/icons';
 import StoreHeader from '../../components/shop/StoreHeader';
-import { getMyOrders } from '../../api/shop.api';
+import StoreFooter from '../../components/shop/StoreFooter';
+import { getMyOrders, getDeliveryPincodes } from '../../api/shop.api';
 import { getMe, updateProfile } from '../../api/profile.api';
 import useAuthStore from '../../store/authStore';
-import { DELIVERY_PINCODES } from '../../config/shop';
 
 const { TextArea } = Input;
 
@@ -35,13 +35,22 @@ const OrderCard = ({ order }) => {
       <Divider style={{ margin: '12px 0' }} />
 
       {(order.items || []).map(it => (
-        <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#374151', marginBottom: 6 }}>
-          <span>{it.product_name} × {parseFloat(it.quantity)} {it.unit}</span>
-          <span>₹{parseFloat(it.subtotal).toFixed(2)}</span>
+        <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+          <div>
+            <div style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{it.product_name}</div>
+            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
+              Qty {parseFloat(it.quantity)} <span style={{ margin: '0 4px' }}>·</span> {it.unit} pack
+            </div>
+          </div>
+          <span style={{ fontSize: 13, color: '#374151', fontWeight: 600, whiteSpace: 'nowrap' }}>₹{parseFloat(it.subtotal).toFixed(2)}</span>
         </div>
       ))}
 
       <Divider style={{ margin: '12px 0' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
+        <span>Packing &amp; Handling</span>
+        <span>₹{parseFloat(order.handling_charge || 0).toFixed(2)}</span>
+      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
         <span>Delivery</span>
         <span>{parseFloat(order.delivery_charge) > 0 ? `₹${parseFloat(order.delivery_charge).toFixed(2)}` : 'FREE'}</span>
@@ -109,16 +118,17 @@ const AddressTab = () => {
   const qc = useQueryClient();
   const [pincodeStatus, setPincodeStatus] = useState(null);
   const { data, isLoading } = useQuery({ queryKey: ['me'], queryFn: getMe });
+  const { data: deliveryPincodes = [] } = useQuery({ queryKey: ['delivery-pincodes'], queryFn: getDeliveryPincodes });
 
   useEffect(() => {
     if (data?.data) {
       form.setFieldsValue({ address: data.data.address || '', pincode: data.data.pincode || '' });
       if (data.data.pincode) {
-        const m = DELIVERY_PINCODES.find(p => p.pincode === data.data.pincode);
+        const m = deliveryPincodes.find(p => p.pincode === data.data.pincode);
         setPincodeStatus(m ? { valid: true, area: m.area } : null);
       }
     }
-  }, [data, form]);
+  }, [data, form, deliveryPincodes]);
 
   const mutation = useMutation({
     mutationFn: updateProfile,
@@ -137,14 +147,14 @@ const AddressTab = () => {
           name="pincode"
           rules={[
             { pattern: /^\d{6}$/, message: 'Enter a valid 6-digit pincode' },
-            { validator: (_, v) => (!v || DELIVERY_PINCODES.find(p => p.pincode === v.trim())) ? Promise.resolve() : Promise.reject(new Error('Sorry, we do not deliver to this pincode')) },
+            { validator: (_, v) => (!v || deliveryPincodes.find(p => p.pincode === v.trim())) ? Promise.resolve() : Promise.reject(new Error('Sorry, we do not deliver to this pincode')) },
           ]}
         >
           <Input
             size="large" maxLength={6} placeholder="6-digit pincode" style={{ borderRadius: 10 }}
             onChange={e => {
               const v = e.target.value;
-              const m = v.length === 6 ? DELIVERY_PINCODES.find(p => p.pincode === v.trim()) : null;
+              const m = v.length === 6 ? deliveryPincodes.find(p => p.pincode === v.trim()) : null;
               setPincodeStatus(v.length === 6 ? (m ? { valid: true, area: m.area } : { valid: false }) : null);
             }}
           />
@@ -179,7 +189,7 @@ const AccountPage = () => {
   const [params, setParams] = useSearchParams();
   const { isAuthenticated } = useAuthStore();
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/store/signup" state={{ tab: 'login', from: window.location.pathname + window.location.search }} replace />;
 
   const activeTab = params.get('tab') === 'address' ? 'address' : 'orders';
 
@@ -200,6 +210,8 @@ const AccountPage = () => {
           <span onClick={() => navigate('/')} style={{ color: '#16a34a', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>← Continue shopping</span>
         </div>
       </div>
+
+      <StoreFooter />
     </div>
   );
 };

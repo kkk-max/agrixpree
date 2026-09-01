@@ -1,4 +1,4 @@
-const { User, FarmerProfile, BuyerProfile, Product, ProductImage, Category, Order, Document, VerificationStep, AuditLog, Procurement, ResaleListing } = require('../../models');
+const { User, FarmerProfile, BuyerProfile, Product, ProductImage, Category, Order, Document, VerificationStep, AuditLog, Procurement, ResaleListing, Pincode } = require('../../models');
 const { AppError } = require('../../middleware/errorHandler');
 const { getPaginationParams, buildPaginationMeta } = require('../../utils/pagination');
 const { Op } = require('sequelize');
@@ -496,6 +496,14 @@ const getShopOrders = async (query) => {
   return { orders: rows, pagination: buildPaginationMeta(count, page, limit) };
 };
 
+const SHOP_ORDER_STATUS_LABELS = {
+  pending: 'placed',
+  confirmed: 'confirmed',
+  out_for_delivery: 'out for delivery',
+  delivered: 'delivered',
+  cancelled: 'cancelled'
+};
+
 const updateShopOrderStatus = async (orderId, status, adminId) => {
   const { ShopOrder } = require('../../models');
   const sse = require('../../utils/sseManager');
@@ -504,6 +512,25 @@ const updateShopOrderStatus = async (orderId, status, adminId) => {
   await order.update({ status });
   const userId = order.user_id ? String(order.user_id) : null;
   sse.emit(order.uuid, userId, { type: 'status_update', orderUuid: order.uuid, status });
+
+  if (order.user_id) {
+    const orderNumber = order.uuid.slice(0, 8).toUpperCase();
+    const statusLabel = SHOP_ORDER_STATUS_LABELS[status] || status;
+    const title = 'Order Update';
+    const message = `Your order #${orderNumber} is now ${statusLabel}.`;
+
+    getNotificationService().createNotification({
+      userId: order.user_id, type: 'order', title, message,
+      referenceId: order.id, referenceType: 'shop_order'
+    }).catch((err) => require('../../utils/logger').error(`Failed to create order notification: ${err.message}`));
+
+    require('../../utils/pushService').sendPushToUser({
+      userId: order.user_id, title, message,
+      data: { orderUuid: order.uuid, status, type: 'shop_order_status' },
+      url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/store/account`
+    }).catch((err) => require('../../utils/logger').error(`Failed to send order push: ${err.message}`));
+  }
+
   return order;
 };
 
@@ -577,4 +604,52 @@ const deleteCategory = async (categoryId) => {
   return { deleted: true, id: categoryId };
 };
 
-module.exports = { getDashboardStats, getUsers, updateUserStatus, reviewDocument, reviewVerificationStep, getAdminProducts, approveProduct, rejectProduct, getProcurements, createProcurement, updateProcurementStatus, createResaleListing, getResaleListings, createShopProduct, updateShopProduct, deleteShopProduct, getAdminShopProducts, getShopOrders, updateShopOrderStatus, getAdminCategories, setCategoryActive, createCategory, updateCategory, deleteCategory };
+// --- Configuration: Pincodes ----------------------------------------------
+// Serviceable delivery pincodes (checkout on the storefront checks against
+// the active ones — see shop.service.js placeOrder).
+
+const getPincodes = async () => {
+  return Pincode.findAll({ order: [['pincode', 'ASC']] });
+};
+
+const createPincode = async (body) => {
+  const pincode = String(body.pincode || '').trim();
+  if (!/^\d{6}$/.test(pincode)) throw new AppError('Pincode must be exactly 6 digits', 400, 'VALIDATION_ERROR');
+
+  const existing = await Pincode.findOne({ where: { pincode } });
+  if (existing) throw new AppError('This pincode already exists', 409, 'CONFLICT');
+
+  return Pincode.create({
+    pincode,
+    area: body.area || null,
+    is_active: body.is_active !== undefined ? toBool(body.is_active) : true
+  });
+};
+
+const updatePincode = async (id, body) => {
+  const record = await Pincode.findByPk(id);
+  if (!record) throw new AppError('Pincode not found', 404, 'NOT_FOUND');
+
+  const updates = {};
+  if (body.pincode !== undefined) {
+    const pincode = String(body.pincode).trim();
+    if (!/^\d{6}$/.test(pincode)) throw new AppError('Pincode must be exactly 6 digits', 400, 'VALIDATION_ERROR');
+    const existing = await Pincode.findOne({ where: { pincode, id: { [Op.ne]: id } } });
+    if (existing) throw new AppError('This pincode already exists', 409, 'CONFLICT');
+    updates.pincode = pincode;
+  }
+  if (body.area !== undefined) updates.area = body.area;
+  if (body.is_active !== undefined) updates.is_active = toBool(body.is_active);
+
+  await record.update(updates);
+  return record;
+};
+
+const deletePincode = async (id) => {
+  const record = await Pincode.findByPk(id);
+  if (!record) throw new AppError('Pincode not found', 404, 'NOT_FOUND');
+  await record.destroy();
+  return { deleted: true, id };
+};
+
+module.exports = { getDashboardStats, getUsers, updateUserStatus, reviewDocument, reviewVerificationStep, getAdminProducts, approveProduct, rejectProduct, getProcurements, createProcurement, updateProcurementStatus, createResaleListing, getResaleListings, createShopProduct, updateShopProduct, deleteShopProduct, getAdminShopProducts, getShopOrders, updateShopOrderStatus, getAdminCategories, setCategoryActive, createCategory, updateCategory, deleteCategory, getPincodes, createPincode, updatePincode, deletePincode };

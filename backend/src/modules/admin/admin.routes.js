@@ -155,4 +155,25 @@ router.patch('/shop/orders/:id/status', async (req, res, next) => {
   catch (err) { next(err); }
 });
 
+// Configuration: Pincodes CRUD
+router.get('/config/pincodes', async (req, res, next) => {
+  try { sendSuccess(res, await service.getPincodes(), 'Pincodes fetched'); }
+  catch (err) { next(err); }
+});
+
+router.post('/config/pincodes', async (req, res, next) => {
+  try { sendSuccess(res, await service.createPincode(req.body), 'Pincode created', 201); }
+  catch (err) { next(err); }
+});
+
+router.put('/config/pincodes/:id', async (req, res, next) => {
+  try { sendSuccess(res, await service.updatePincode(req.params.id, req.body), 'Pincode updated'); }
+  catch (err) { next(err); }
+});
+
+router.delete('/config/pincodes/:id', async (req, res, next) => {
+  try { sendSuccess(res, await service.deletePincode(req.params.id), 'Pincode deleted'); }
+  catch (err) { next(err); }
+});
+
 module.exports = router;

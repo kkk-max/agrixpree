@@ -1,15 +1,9 @@
 // Shop-wide delivery configuration. Keep in sync with backend src/config/constants.js.
 export const FREE_DELIVERY_THRESHOLD = 200;
-export const DELIVERY_FEE = 50;
+export const DELIVERY_FEE = 20;
 
-export const DELIVERY_PINCODES = [
-  { pincode: '388315', area: 'Bakrol / Vallabh Vidyanagar' },
-  { pincode: '388325', area: 'Karamsad, Anand' },
-  { pincode: '388120', area: 'Vidyanagar (Vallabh Vidyanagar)' },
-  { pincode: '388345', area: 'Jitodia, Anand' },
-  { pincode: '387310', area: 'Lambhvel / Boriavi, Anand' },
-  { pincode: '388001', area: 'Anand' },
-];
+// Packing & Handling: charged on every order, as a % of the vegetable order value.
+export const HANDLING_CHARGE_PERCENT = 2;
 
 // Returns { fee, isFree, remaining } for a given goods subtotal.
 export const computeDelivery = (subtotal) => {
@@ -20,6 +14,9 @@ export const computeDelivery = (subtotal) => {
     remaining: isFree ? 0 : Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal),
   };
 };
+
+// Returns the Packing & Handling charge for a given goods subtotal.
+export const computeHandling = (subtotal) => parseFloat(((subtotal * HANDLING_CHARGE_PERCENT) / 100).toFixed(2));
 
 // --- Delivery workflow ---------------------------------------------------
 // Daily cutoff: orders received before 11 PM go into the current delivery

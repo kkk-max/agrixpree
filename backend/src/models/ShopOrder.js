@@ -11,6 +11,7 @@ module.exports = (sequelize) => {
     delivery_address: { type: DataTypes.TEXT, allowNull: false },
     delivery_pincode: { type: DataTypes.STRING(10), allowNull: false },
     delivery_charge: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
+    handling_charge: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
     total_amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     status: {
       type: DataTypes.ENUM('pending', 'confirmed', 'out_for_delivery', 'delivered', 'cancelled'),

@@ -12,3 +12,5 @@ ruvector.db
 .claude/
 .swarm/
 .mcp.json
+*.pem
+*.key

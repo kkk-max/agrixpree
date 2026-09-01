@@ -40,6 +40,7 @@ const menuByRole = {
     { key: '/admin/shop-categories', icon: <AppstoreOutlined />, label: 'Categories' },
     { key: '/admin/shop-products', icon: <ShoppingCartOutlined />, label: 'Shop Products' },
     { key: '/admin/shop-orders', icon: <OrderedListOutlined />, label: 'Orders' },
+    { key: '/admin/configuration', icon: <SettingOutlined />, label: 'Configuration' },
   ]
 };
 

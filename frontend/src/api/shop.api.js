@@ -32,6 +32,10 @@ export const getShopProduct = (uuid) =>
 export const placeOrder = (data) =>
   client.post('/shop/orders', data).then(r => r.data);
 
+// Serviceable delivery pincodes, admin-managed (Configuration > Pincodes).
+export const getDeliveryPincodes = () =>
+  client.get('/config/pincodes').then(r => r.data.data || []);
+
 // Customer (authenticated) endpoints
 export const getMyOrders = () =>
   client.get('/shop/my-orders').then(r => r.data);

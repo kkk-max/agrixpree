@@ -1,12 +1,10 @@
-const { Product, ProductImage, Category, ShopOrder, ShopOrderItem, User } = require('../../models');
+const { Product, ProductImage, Category, ShopOrder, ShopOrderItem, User, Pincode } = require('../../models');
 const { Op, where: sequelizeWhere, cast, col } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
 const { getPaginationParams, buildPaginationMeta } = require('../../utils/pagination');
 const { AppError } = require('../../middleware/errorHandler');
-const { FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } = require('../../config/constants');
+const { FREE_DELIVERY_THRESHOLD, DELIVERY_FEE, HANDLING_CHARGE_PERCENT } = require('../../config/constants');
 const { effectiveMinOrder } = require('../../config/units');
-
-const DELIVERY_PINCODES = ['388315', '388325', '388120', '388345', '387310', '388001'];
 
 const getShopProducts = async (query) => {
   const { page, limit, offset } = getPaginationParams(query);
@@ -74,7 +72,8 @@ const getShopCategories = async () => {
 const placeOrder = async (body, userId = null) => {
   const { customerName, customerPhone, customerEmail, deliveryAddress, deliveryPincode, notes, items } = body;
 
-  if (!DELIVERY_PINCODES.includes(String(deliveryPincode))) {
+  const servesPincode = await Pincode.findOne({ where: { pincode: String(deliveryPincode), is_active: true } });
+  if (!servesPincode) {
     throw new AppError('Delivery not available for this pincode', 400, 'DELIVERY_UNAVAILABLE');
   }
 
@@ -135,7 +134,8 @@ const placeOrder = async (body, userId = null) => {
 
   const itemsSubtotal = parseFloat(totalAmount.toFixed(2));
   const deliveryCharge = itemsSubtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-  const grandTotal = parseFloat((itemsSubtotal + deliveryCharge).toFixed(2));
+  const handlingCharge = parseFloat((itemsSubtotal * HANDLING_CHARGE_PERCENT / 100).toFixed(2));
+  const grandTotal = parseFloat((itemsSubtotal + deliveryCharge + handlingCharge).toFixed(2));
 
   const order = await ShopOrder.create({
     uuid: uuidv4(),
@@ -146,6 +146,7 @@ const placeOrder = async (body, userId = null) => {
     delivery_address: deliveryAddress,
     delivery_pincode: String(deliveryPincode),
     delivery_charge: deliveryCharge,
+    handling_charge: handlingCharge,
     total_amount: grandTotal,
     status: 'pending',
     notes: notes || null
@@ -162,6 +163,14 @@ const placeOrder = async (body, userId = null) => {
       { where: { id: userId } }
     );
   }
+
+  const orderNumber = order.uuid.slice(0, 8).toUpperCase();
+  require('../../utils/adminNotify').notifyAdmins({
+    type: 'order', title: 'New Order Placed',
+    message: `${customerName} placed order #${orderNumber} for ₹${grandTotal}.`,
+    referenceId: order.id, referenceType: 'shop_order',
+    url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/shop-orders`
+  }).catch((err) => require('../../utils/logger').error(`Failed to notify admins of new order: ${err.message}`));
 
   return { ...order.toJSON(), items: orderItems };
 };

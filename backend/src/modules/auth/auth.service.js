@@ -80,6 +80,13 @@ const registerCustomer = async ({ name, mobile, email, password }) => {
   const expires_at = dayjs().add(7, 'day').toDate();
   await RefreshToken.create({ user_id: user.id, token: refreshToken, expires_at });
 
+  require('../../utils/adminNotify').notifyAdmins({
+    type: 'system', title: 'New Customer Signed Up',
+    message: `${user.name} (${user.mobile}) just created a customer account.`,
+    referenceId: user.id, referenceType: 'user',
+    url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/users`
+  }).catch((err) => logger.error(`Failed to notify admins of new customer: ${err.message}`));
+
   return {
     accessToken,
     refreshToken,
@@ -96,7 +103,15 @@ const verifyOtp = async ({ email, code, purpose }) => {
 
   if (purpose === 'registration') {
     const user = await User.findOne({ where: { email } });
-    if (user) await user.update({ is_verified: true });
+    if (user) {
+      await user.update({ is_verified: true });
+      require('../../utils/adminNotify').notifyAdmins({
+        type: 'system', title: 'New User Onboarded',
+        message: `${user.name} completed registration as a ${user.role}.`,
+        referenceId: user.id, referenceType: 'user',
+        url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/users`
+      }).catch((err) => logger.error(`Failed to notify admins of new ${user.role}: ${err.message}`));
+    }
   }
 
   return { verified: true };

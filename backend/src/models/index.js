@@ -26,6 +26,7 @@ const Procurement = require('./Procurement')(sequelize);
 const ResaleListing = require('./ResaleListing')(sequelize);
 const ShopOrder = require('./ShopOrder')(sequelize);
 const ShopOrderItem = require('./ShopOrderItem')(sequelize);
+const Pincode = require('./Pincode')(sequelize);
 
 // Associations
 User.hasOne(FarmerProfile, { foreignKey: 'user_id', as: 'farmerProfile' });
@@ -79,4 +80,4 @@ ShopOrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 ShopOrder.belongsTo(User, { foreignKey: 'user_id', as: 'customer' });
 User.hasMany(ShopOrder, { foreignKey: 'user_id', as: 'shopOrders' });
 
-module.exports = { sequelize, Sequelize, User, FarmerProfile, BuyerProfile, OtpCode, RefreshToken, Wallet, WalletTransaction, Category, Product, ProductImage, Document, VerificationStep, Order, OrderItem, Notification, AuditLog, Procurement, ResaleListing, ShopOrder, ShopOrderItem };
+module.exports = { sequelize, Sequelize, User, FarmerProfile, BuyerProfile, OtpCode, RefreshToken, Wallet, WalletTransaction, Category, Product, ProductImage, Document, VerificationStep, Order, OrderItem, Notification, AuditLog, Procurement, ResaleListing, ShopOrder, ShopOrderItem, Pincode };
