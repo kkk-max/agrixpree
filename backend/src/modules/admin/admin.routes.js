@@ -101,13 +101,13 @@ router.get('/shop/products', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/shop/products', upload.array('images', 10), async (req, res, next) => {
-  try { sendSuccess(res, await service.createShopProduct(req.body, req.files, req.user.id), 'Shop product created', 201); }
+router.post('/shop/products', upload.single('image'), async (req, res, next) => {
+  try { sendSuccess(res, await service.createShopProduct(req.body, req.file, req.user.id), 'Shop product created', 201); }
   catch (err) { next(err); }
 });
 
-router.put('/shop/products/:id', upload.array('images', 10), async (req, res, next) => {
-  try { sendSuccess(res, await service.updateShopProduct(req.params.id, req.body, req.files, req.user.id)); }
+router.put('/shop/products/:id', upload.single('image'), async (req, res, next) => {
+  try { sendSuccess(res, await service.updateShopProduct(req.params.id, req.body, req.file, req.user.id)); }
   catch (err) { next(err); }
 });
 

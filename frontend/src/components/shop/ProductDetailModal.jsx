@@ -20,6 +20,7 @@ const getCategoryEmoji = (cat) => {
 const resolveImg = (img) => {
   if (!img) return null;
   if (img.startsWith('http')) return img;
+  if (img.startsWith('/')) return `${API_URL}${img}`;
   return `${API_URL}/uploads/${img}`;
 };
 

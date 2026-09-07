@@ -365,7 +365,7 @@ const parsePacks = (raw) => {
     .sort((a, b) => a.grams - b.grams);
 };
 
-const createShopProduct = async (body, files, adminId) => {
+const createShopProduct = async (body, file, adminId) => {
   const name = body.name;
   const slug = name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
 
@@ -392,15 +392,13 @@ const createShopProduct = async (body, files, adminId) => {
     is_draft: false
   });
 
-  if (files && files.length > 0) {
-    await Promise.all(files.map((file, index) =>
-      ProductImage.create({
-        product_id: product.id,
-        image_url: `/uploads/${file.filename}`,
-        is_primary: index === 0,
-        sort_order: index
-      })
-    ));
+  if (file) {
+    await ProductImage.create({
+      product_id: product.id,
+      image_url: `/uploads/${file.filename}`,
+      is_primary: true,
+      sort_order: 0
+    });
   }
 
   return product.reload({
@@ -411,7 +409,7 @@ const createShopProduct = async (body, files, adminId) => {
   });
 };
 
-const updateShopProduct = async (productId, body, files, adminId) => {
+const updateShopProduct = async (productId, body, file, adminId) => {
   const product = await Product.findOne({ where: { uuid: productId } });
   if (!product) throw new AppError('Product not found', 404, 'NOT_FOUND');
 
@@ -433,15 +431,18 @@ const updateShopProduct = async (productId, body, files, adminId) => {
 
   await product.update(allowedUpdates);
 
-  if (files && files.length > 0) {
-    await Promise.all(files.map((file, index) =>
-      ProductImage.create({
-        product_id: product.id,
-        image_url: `/uploads/${file.filename}`,
-        is_primary: false,
-        sort_order: index
-      })
-    ));
+  if (file) {
+    // Replace the existing image rather than appending, so there is always
+    // exactly one image and it's the one just uploaded — everywhere the
+    // product is shown (admin table, admin view modal, storefront, cart,
+    // product detail) reads from the same `images` association.
+    await ProductImage.destroy({ where: { product_id: product.id } });
+    await ProductImage.create({
+      product_id: product.id,
+      image_url: `/uploads/${file.filename}`,
+      is_primary: true,
+      sort_order: 0
+    });
   }
 
   return product.reload({
@@ -507,7 +508,10 @@ const SHOP_ORDER_STATUS_LABELS = {
 const updateShopOrderStatus = async (orderId, status, adminId) => {
   const { ShopOrder } = require('../../models');
   const sse = require('../../utils/sseManager');
-  const order = await ShopOrder.findOne({ where: { uuid: orderId } });
+  const order = await ShopOrder.findOne({
+    where: { uuid: orderId },
+    include: [{ model: User, as: 'customer', attributes: ['id', 'uuid'] }]
+  });
   if (!order) throw new AppError('Shop order not found', 404, 'NOT_FOUND');
   await order.update({ status });
   const userId = order.user_id ? String(order.user_id) : null;
@@ -524,11 +528,16 @@ const updateShopOrderStatus = async (orderId, status, adminId) => {
       referenceId: order.id, referenceType: 'shop_order'
     }).catch((err) => require('../../utils/logger').error(`Failed to create order notification: ${err.message}`));
 
-    require('../../utils/pushService').sendPushToUser({
-      userId: order.user_id, title, message,
-      data: { orderUuid: order.uuid, status, type: 'shop_order_status' },
-      url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/store/account`
-    }).catch((err) => require('../../utils/logger').error(`Failed to send order push: ${err.message}`));
+    // sendPushToUser targets OneSignal's external_id, which the frontend sets via
+    // OneSignal.login(user.id) using the public UUID (see auth.service.js) — not
+    // the numeric order.user_id FK. Must match or the push silently matches 0 devices.
+    if (order.customer?.uuid) {
+      require('../../utils/pushService').sendPushToUser({
+        userId: order.customer.uuid, title, message,
+        data: { orderUuid: order.uuid, status, type: 'shop_order_status' },
+        url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/store/account`
+      }).catch((err) => require('../../utils/logger').error(`Failed to send order push: ${err.message}`));
+    }
   }
 
   return order;

@@ -22,6 +22,7 @@ const API_URL = import.meta.env.VITE_API_URL || '';
 const getImageSrc = (img) => {
   if (!img) return null;
   if (img.startsWith('http')) return img;
+  if (img.startsWith('/')) return `${API_URL}${img}`;
   return `${API_URL}/uploads/${img}`;
 };
 
@@ -294,7 +295,11 @@ const ShopProductsPage = () => {
       sellByWeight: packs.length > 0,
       packs,
     });
-    setFileList([]);
+    const existingImage = record.images?.[0];
+    setFileList(existingImage ? [{
+      uid: 'existing', name: 'current-image', status: 'done',
+      url: getImageSrc(existingImage.image_url),
+    }] : []);
     setModalOpen(true);
   };
 
@@ -331,9 +336,10 @@ const ShopProductsPage = () => {
     formData.append('tags', JSON.stringify(Array.isArray(tags) ? tags : []));
     formData.append('packs', JSON.stringify(cleanPacks));
 
-    fileList.forEach(f => {
-      if (f.originFileObj) formData.append('images', f.originFileObj);
-    });
+    // Only sent when the admin picked a new file — an untouched existing
+    // image (no originFileObj) is left alone on the backend.
+    const newFile = fileList.find(f => f.originFileObj);
+    if (newFile) formData.append('image', newFile.originFileObj);
     return formData;
   };
 
@@ -656,19 +662,18 @@ const ShopProductsPage = () => {
               <Switch checkedChildren="Yes" unCheckedChildren="No" style={{ background: '#16a34a' }} />
             </Form.Item>
 
-            <Form.Item label="Product Images" name="images" style={{ gridColumn: '1 / -1' }}>
+            <Form.Item label="Product Image" name="image" style={{ gridColumn: '1 / -1' }}>
               <Dragger
-                multiple
                 accept="image/*"
-                maxCount={10}
+                maxCount={1}
                 fileList={fileList}
                 beforeUpload={() => false}
-                onChange={({ fileList: fl }) => setFileList(fl)}
+                onChange={({ fileList: fl }) => setFileList(fl.slice(-1))}
                 listType="picture"
               >
                 <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-                <p style={{ fontWeight: 600 }}>Click or drag images here</p>
-                <p style={{ fontSize: 12, color: '#9ca3af' }}>PNG, JPG, WEBP up to 10 files</p>
+                <p style={{ fontWeight: 600 }}>Click or drag an image here</p>
+                <p style={{ fontSize: 12, color: '#9ca3af' }}>PNG, JPG, WEBP — replaces the current image</p>
               </Dragger>
             </Form.Item>
           </div>
