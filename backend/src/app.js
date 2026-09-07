@@ -33,8 +33,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(generalLimiter);
 
-// Static uploads
-app.use('/uploads', express.static(path.join(process.cwd(), process.env.UPLOAD_DIR || 'uploads')));
+// Static uploads — frontend and backend live on different subdomains
+// (app.agrixpree.com / api.agrixpree.com), so Helmet's default
+// same-origin Cross-Origin-Resource-Policy blocks <img> tags from
+// loading these; relax it just for this public, read-only route.
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(process.cwd(), process.env.UPLOAD_DIR || 'uploads')));
 
 // Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
