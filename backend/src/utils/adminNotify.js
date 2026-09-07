@@ -13,7 +13,9 @@ const notifyAdmins = async ({ type, title, message, referenceId, referenceType, 
   await Promise.all(admins.map((admin) => Promise.all([
     createNotification({ userId: admin.id, type, title, message, referenceId, referenceType })
       .catch((err) => logger.error(`Failed to create admin notification (user ${admin.id}): ${err.message}`)),
-    sendPushToUser({ userId: admin.id, title, message, data, url })
+    // Push targets OneSignal's external_id, which the frontend sets via
+    // OneSignal.login(user.id) using the public UUID, not the numeric admin.id.
+    sendPushToUser({ userId: admin.uuid, title, message, data, url })
       .catch((err) => logger.error(`Failed to push admin notification (user ${admin.id}): ${err.message}`))
   ])));
 };

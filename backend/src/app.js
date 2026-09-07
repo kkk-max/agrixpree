@@ -12,6 +12,10 @@ const logger = require('./utils/logger');
 
 const app = express();
 
+// Behind nginx/ALB on EC2 — trust the first hop so X-Forwarded-For
+// is read correctly by express-rate-limit and req.ip
+app.set('trust proxy', 1);
+
 app.use(helmet());
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())

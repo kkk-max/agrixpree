@@ -7,6 +7,7 @@ import useAuthStore from '../../store/authStore';
 import { logout as apiLogout } from '../../api/auth.api';
 import { getNotifications, markRead, markAllRead } from '../../api/notification.api';
 import { formatDateTime } from '../../utils/formatters';
+import PushEnableButton from '../common/PushEnableButton';
 import agrixpreeLogo from '../../assets/agrixpree-logo.png';
 
 // Shared storefront header used across all shop pages.
@@ -124,6 +125,8 @@ const StoreHeader = ({ subtitle = 'Farm to Door' }) => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {isAuthenticated && <PushEnableButton style={iconBtn} />}
+
         {isAuthenticated && (
           <Dropdown trigger={['click']} placement="bottomRight" dropdownRender={() => notifPanel}>
             <div style={iconBtn}>
